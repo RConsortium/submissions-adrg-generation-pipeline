@@ -1,0 +1,95 @@
+---
+title: "pipeline to automatically generate ADRG"
+---
+
+# Automation block 1: TLG generation information preprocessing
+
+## Read in .r codes, extract information of variables, dataset, output
+
+These information can be used in section 7.3 and 3.1
+
+```{r}
+library(httr)
+library(jsonlite)
+library(readr)
+
+# apiKey <- xx
+
+source("./llm_prompts.R")
+source("../utils/llm_api.R")
+
+# identify tlg r files
+tlg_r_names <- list.files(path = "../../submission/programs", pattern = "^tlf.*\\.r$", full.names = TRUE)
+
+```
+
+
+### Approach 1:
+
+Extract information from R code
+
+```{r}
+tlg_var_dat_pair <- sapply(tlg_r_names, function(i)
+  deepseek(paste(prompt_var_dat_code, paste(readLines(i), collapse = " ")), apiKey = apiKey))
+
+tlg_filter <- sapply(tlg_r_names, function(i)
+  deepseek(paste(prompt_filter_code, paste(readLines(i), collapse = " ")), apiKey = apiKey))
+
+tlg_output <- sapply(tlg_r_names, function(i)
+  deepseek(paste(prompt_output_code, paste(readLines(i), collapse = " ")), apiKey = apiKey))
+
+tlg_parse_dat_var <- sapply(tlg_var_dat_pair, function(i)
+  deepseek(paste(prompt_parse_dat_var, i), apiKey = apiKey))
+
+tab.out <- cbind(tlg_r_names, tlg_output, tlg_parse_dat_var, tlg_filter)
+#tab.out <- apply(tab.out, c(1, 2), function(x) gsub("\n", ";", x))
+#tab.out <- apply(tab.out, c(1, 2), function(x) gsub("`", " ", x))
+colnames(tab.out) <- c("script","output","Analysis Datasets & Variables","selection criteria")
+knitr::kable(tab.out)
+
+```
+
+### Approach 2:
+
+First write a description from R code, then extract information from the description - seem to have more formatting issues / information mixup
+
+
+```{r eval=FALSE}
+# NOT RUN
+tlg_extraction <- sapply(tlg_r_names, function(i)
+  deepseek(paste(prompt_tlg_code_extraction, paste(readLines(i), collapse = " ")), apiKey = apiKey))
+
+tlg_var_dat_pair2 <- sapply(tlg_extraction, function(i)
+  deepseek(paste(prompt_var_dat_para, i), apiKey = apiKey))
+
+tlg_filter2 <- sapply(tlg_extraction, function(i)
+  deepseek(paste(prompt_filter_para, i), apiKey = apiKey))
+
+tlg_output2 <- sapply(tlg_extraction, function(i)
+  deepseek(paste(prompt_output_para, i), apiKey = apiKey), simplify = F)
+
+tlg_parse_dat_var2 <- sapply(tlg_var_dat_pair2, function(i)
+  deepseek(paste(prompt_parse_dat_var, i), apiKey = apiKey))
+
+tab.out2 <- cbind(tlg_r_names, tlg_output2, tlg_parse_dat_var2, tlg_filter2)
+#some formatting issues - remove \n
+tab.out3 <- apply(tab.out2, c(1, 2), function(x) gsub("\n", ";", x))
+colnames(tab.out3) <- c("script","output","Analysis Datasets & Variables","selection criteria")
+knitr::kable(tab.out3)
+
+```
+
+## read in variable descirptions
+
+These information can be used in section 3.1
+
+
+# Automation block 2: ADaM generation informtion proprocessing
+
+TBD
+
+# Automation block 3: R env information preprocessing
+
+TBD
+
+# insert information into ADRG template
