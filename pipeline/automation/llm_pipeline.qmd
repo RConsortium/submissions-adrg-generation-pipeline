@@ -20,7 +20,7 @@ readRenviron(here::here(".Renviron"))
 source(here::here("pipeline/utils/llm_api.R"))
 source(here::here("pipeline/automation/llm_prompts.R"))
 
-MODEL_NAME <- "claude-3-7-sonnet-latest"  # See or add to available models in llm_api.R
+MODEL_NAME <- "claude-3-5-haiku-latest"  # See or add to available models in llm_api.R
 
 # Validate model selection
 if (!MODEL_NAME %in% names(SUPPORTED_MODELS)) {
@@ -29,6 +29,9 @@ if (!MODEL_NAME %in% names(SUPPORTED_MODELS)) {
     MODEL_NAME, paste(names(SUPPORTED_MODELS), collapse = ", ")
   ))
 }
+
+# Mark the start of a new run
+mark_run_start(sprintf("Starting ADRG generation pipeline with model: %s", MODEL_NAME))
 
 # Print current working directory and model info
 print("Current working directory:")

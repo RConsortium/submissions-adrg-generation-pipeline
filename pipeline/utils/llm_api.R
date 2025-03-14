@@ -33,6 +33,9 @@ SUPPORTED_MODELS <- list(
   )
 )
 
+# Source logging utilities
+library(here)
+source(here("pipeline", "utils", "logging.R"))
 
 # OpenAI API request function
 openai_request <- function(prompt, model, temperature, api_key) {
@@ -137,10 +140,15 @@ llm_call <- function(prompt, model, temperature = 0) {
   }
 
   # Route to appropriate API based on provider
-  switch(model_config$provider,
+  response <- switch(model_config$provider,
     "openai" = openai_request(prompt, model, temperature, api_key),
     "deepseek" = deepseek_request(prompt, model, temperature, api_key),
     "anthropic" = anthropic_request(prompt, model, temperature, api_key),
     stop(sprintf("Unsupported provider: %s", model_config$provider))
   )
+
+  # Log the call details
+  log_llm_call(prompt, model, response, temperature)
+
+  response
 }

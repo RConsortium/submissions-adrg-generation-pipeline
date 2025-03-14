@@ -1,8 +1,9 @@
 library(testthat)
 library(httr)
+library(here)
 
 # Load environment variables from project root .Renviron
-readRenviron("../../.Renviron")
+readRenviron(here(".Renviron"))
 
 # Set environment variables for testing
 # Replace these with your actual API keys from .Renviron
@@ -13,7 +14,7 @@ Sys.setenv(
 )
 
 # Source the LLM API file
-source("../../pipeline/utils/llm_api.R")
+source(here("pipeline", "utils", "llm_api.R"))
 
 # Skip tests if API keys are not available
 skip_if_no_api_keys <- function() {
