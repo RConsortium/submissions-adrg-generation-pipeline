@@ -5,3 +5,14 @@
 .DS_Store
 .Rproj
 .Renviron
+
+# Quarto generated files
+*.html
+*.pdf
+*.docx
+*.pptx
+*.odt
+*.rtf
+*.md
+*.ipynb
+*.css
