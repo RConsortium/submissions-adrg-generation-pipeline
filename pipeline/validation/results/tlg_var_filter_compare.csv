@@ -1,0 +1,5 @@
+"","V1","V2","V3","V4"
+"1","NULL","NULL","NULL","NULL"
+"2","NULL","NULL","NULL","STUDYID missing in LLM; ADADAS.PARAMCD 'ACTOT' vs 'ACTTOT'; LLM adds ADADAS.ANL01FL, AVISITN 0 &24, ADSL.EFFFL; ADADAS.ITTFL vs ADSL.ITTFL"
+"3","NULL","NULL","ADLBC vs ADLB variables; LLM includes extra variables: ADSL.ITTFL, ADLB.STUDYID, ADLB.USUBJID, ADLB.TRTP.","NULL"
+"4","NULL","NULL","ADSL.TRT01A present in LLM text, missing in original; ADTTE.PARAM present in LLM text, missing in original; ADTTE.STUDYID, ADTTE.USUBJID present in original, missing in LLM text.","NULL"

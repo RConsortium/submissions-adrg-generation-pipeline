@@ -5,34 +5,26 @@
 prompt_var_dat_code <- "Please review the following R code and identify the variables used, 
 along with the corresponding datasets they belong to. 
 Provide a table that can be directly saved as a csv, with two columns: 
-one for the variable names and the other for the associated dataset names. no explanation please"
+one for the variable names and the other for the associated dataset names. no explanation please.
+Please use the initial source dataset names, don't include anything from intermediate datasets."
 
 prompt_filter_code <- "Please review the following R code and identify the filtering criteria applied. 
-no explanation please. no line break please."
+When outputing variable name, parsing the associated data set name and the variable name, seperated by a dot, 
+and captialize all characters. Please use the initial source dataset names instead of the intermediate dataset names.
+no explanation please. please ensure the condition is included. no line break please. seperate values by ; "
 
 prompt_output_code <- "Please review the following R code and identify the output file name. 
-no explanation please"
+no explanation please. please output a single file name."
 
 prompt_parse_dat_var <- "Below is a table with two columns: one for the variable names and the other for the associated dataset names. 
 For each row, generate one value by parsing the data set name and the variable name, seperated by a dot. 
-captialize all characters. no explanation please. do not include line break please"
+captialize all characters. no explanation please. do not include line break please. seperate values by ; "
 
-# first extract all information from code, generate a paragraph
-# then extract information from the paragraph
-# however this approach gave more formatting issues
 
-prompt_tlg_code_extraction <- "Please review the following R code and summarize three bullet points 
-1) the variables used, along with the corresponding datasets they belong to. 
-2) the filtering criteria applied.
-3) the output file name. 
-no explanation please"
+# compare results
 
-prompt_var_dat_para <- "Please review the following description. 
-Provide a table that can be directly saved as a csv, with two columns: 
-one for the variable names and the other for the associated dataset names. no explanation please"
-
-prompt_filter_para <- "Please review the following description and identify the filtering criteria applied. 
-no explanation please. no line break please. "
-
-prompt_output_para <- "Please review the following description and identify the output file name. 
-no explanation please. do not include character ` please"
+prompt_compare <- "compare the two text chuncks, summarize descripencies between the two text chuncks. 
+but do not highlight any formatting differences such as the use of different delimiters, punctuation, or the order of variables. 
+Focus only on comparing the content of the two chunks.
+If no significant difference, output NULL. no explanation if response is NULL.
+do not include line break please."

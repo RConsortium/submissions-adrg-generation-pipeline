@@ -1,0 +1,116 @@
+---
+title: "Test LLM result consistency"
+format: html
+editor: visual
+---
+
+```{r}
+library(httr)
+library(jsonlite)
+library(readr)
+library(here)
+library(parallel)
+
+
+# Set number of cores (e.g., 4 cores)
+num_cores <- 4
+
+# Load environment variables from project root .Renviron
+readRenviron(here::here(".Renviron"))
+
+source(here::here("pipeline/utils/llm_api.R"))
+source(here::here("pipeline/automation/llm_prompts.R"))
+
+# identify tlg r files - using here package for path management
+tlg_r_names <- list.files(path = here::here("submission/programs"), pattern = "^tlf.*\\.r$", full.names = TRUE)
+
+# Print found files
+print("Found TLG files:")
+print(tlg_r_names)
+```
+
+## Test consistency using table in 7.3
+
+```{r}
+
+
+run_tlg_var_filter <- function(tlg_r_names, MODEL_NAME) {
+  tlg_var_dat_pair <- sapply(tlg_r_names, function(i)
+    llm_call(paste(prompt_var_dat_code, paste(readLines(i), collapse = " ")), 
+             model = MODEL_NAME))
+    Sys.sleep(3)
+  tlg_filter <- sapply(tlg_r_names, function(i)
+    llm_call(paste(prompt_filter_code, paste(readLines(i), collapse = " ")), 
+             model = MODEL_NAME))
+    Sys.sleep(3)
+  tlg_output <- sapply(tlg_r_names, function(i)
+    llm_call(paste(prompt_output_code, paste(readLines(i), collapse = " ")), 
+             model = MODEL_NAME))
+    Sys.sleep(3)
+  tlg_parse_dat_var <- sapply(tlg_var_dat_pair, function(i)
+    llm_call(paste(prompt_parse_dat_var, i), 
+             model = MODEL_NAME))
+  Sys.sleep(3)
+  
+  tab_out <- cbind(basename(tlg_r_names), tlg_output, tlg_parse_dat_var, tlg_filter)
+  colnames(tab_out) <- c("script","output","Analysis Datasets & Variables","selection criteria")
+  rownames(tab_out) <- NULL
+  out <- tab_out
+}
+
+
+
+```
+
+## Loop through multiple models to avoid overload errors
+
+```{r, echo=FALSE, results = 'hide'}
+n <- 10
+consistency_out_g <- consistency_out_c <- consistency_out_d <- vector('list', n)
+for(loop in 1:n){
+
+  consistency_out_g[[loop]] <- run_tlg_var_filter(tlg_r_names, MODEL_NAME = "gpt-4o")
+  consistency_out_c[[loop]] <- run_tlg_var_filter(tlg_r_names, MODEL_NAME = "claude-3-7-sonnet-latest")
+  consistency_out_d[[loop]] <- run_tlg_var_filter(tlg_r_names, MODEL_NAME = "deepseek-reasoner")
+
+  
+}
+```
+
+## GPT
+
+```{r}
+for (i in 1:4){
+  tmp <- t(sapply(consistency_out_g, function(j)j[,i]))
+  print(knitr::kable(tmp))
+  write.csv(tmp, paste0("eval_results/consistency ", colnames(consistency_out_g[[1]])[i]," gpt-4o.csv"))
+}
+
+
+```
+
+## claude-3-7
+
+```{r}
+for (i in 1:4){
+  tmp <- t(sapply(consistency_out_c, function(j)j[,i]))
+  print(knitr::kable(tmp))
+  write.csv(tmp, paste0("eval_results/consistency ", colnames(consistency_out_c[[1]])[i]," claude-3-7.csv"))
+}
+
+
+```
+
+## deepseek-reasoner
+
+```{r}
+for (i in 1:4){
+  tmp <- t(sapply(consistency_out_d, function(j)j[,i]))
+  print(knitr::kable(tmp))
+  write.csv(tmp, paste0("eval_results/consistency ", colnames(consistency_out_d[[1]])[i]," deepseek-reasoner.csv"))
+}
+
+
+```
+
+## 

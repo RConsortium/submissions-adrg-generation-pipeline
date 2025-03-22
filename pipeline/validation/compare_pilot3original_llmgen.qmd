@@ -1,0 +1,68 @@
+---
+title: "ADRG Result Validation with pilot 3 ADRG"
+format: html
+editor: visual
+---
+
+```{r}
+library(parallel)
+MODEL_NAME <- "deepseek-reasoner"
+# resaoner does a better job than gpt-4o (gpt4o found many trivial differences)
+
+# Set number of cores (e.g., 4 cores)
+num_cores <- 4
+
+
+# Load environment variables from project root .Renviron
+readRenviron(here::here(".Renviron"))
+
+source(here::here("pipeline/utils/llm_api.R"))
+source(here::here("pipeline/automation/llm_prompts.R"))
+```
+
+## Compare LLM generated results vs original results
+
+```{r}
+gen_tlg_var_filter_tab <- read.csv("../../outputs/intermediate/tlg_var_filter_table.csv")
+ori_tlg_var_filter_tab <- read.csv("../../submission/pilot3_tlg_var_filter_table.csv")
+
+rownames(gen_tlg_var_filter_tab) <- gen_tlg_var_filter_tab[,1]
+rownames(ori_tlg_var_filter_tab) <- ori_tlg_var_filter_tab[,1]
+
+gen_tlg_var_filter_tab <- gen_tlg_var_filter_tab[rownames(ori_tlg_var_filter_tab),]
+
+# Parallelize with mclapply
+
+tlg_var_filter_compare <- mclapply(1:nrow(gen_tlg_var_filter_tab), function(i) {
+                            sapply(1:ncol(gen_tlg_var_filter_tab),
+                                    function(j) {
+                          llm_call(paste(prompt_compare, 
+                                         "1. text from original pilot3 ADRG:", ori_tlg_var_filter_tab[i,j],
+                                         "2. LLM generated text:" ,gen_tlg_var_filter_tab[i,j] ), 
+           model = MODEL_NAME)  })
+})
+```
+
+## Original table
+
+```{r}
+print(knitr::kable(ori_tlg_var_filter_tab))
+
+```
+
+## LLM generated table
+
+```{r}
+ print(knitr::kable(gen_tlg_var_filter_tab))
+```
+
+## difference
+
+```{r}
+
+tlg_var_filter_compare_tab<- do.call(rbind,tlg_var_filter_compare)
+
+print(knitr::kable(tlg_var_filter_compare_tab))
+
+write.csv(tlg_var_filter_compare_tab, file="results/tlg_var_filter_compare.csv")
+```

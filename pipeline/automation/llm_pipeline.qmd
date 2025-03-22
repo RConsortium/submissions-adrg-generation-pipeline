@@ -13,6 +13,11 @@ library(httr)
 library(jsonlite)
 library(readr)
 library(here)
+library(parallel)
+
+
+# Set number of cores (e.g., 4 cores)
+num_cores <- 4
 
 # Load environment variables from project root .Renviron
 readRenviron(here::here(".Renviron"))
@@ -20,7 +25,9 @@ readRenviron(here::here(".Renviron"))
 source(here::here("pipeline/utils/llm_api.R"))
 source(here::here("pipeline/automation/llm_prompts.R"))
 
-MODEL_NAME <- "claude-3-5-haiku-latest"  # See or add to available models in llm_api.R
+#MODEL_NAME <- "claude-3-5-haiku-latest"  # See or add to available models in llm_api.R
+MODEL_NAME <- "gpt-4o"
+# initial comparison between gpt-4o, deepseek-reasoner, claude. gpt-4o & claude gave more consistent result with cleaner formatting
 
 # Validate model selection
 if (!MODEL_NAME %in% names(SUPPORTED_MODELS)) {
@@ -46,11 +53,11 @@ print("Found TLG files:")
 print(tlg_r_names)
 ```
 
-### Approach 1:
+
 
 Extract information from R code
 
-```{r}
+```{r, echo=FALSE, results = 'hide'}
 tlg_var_dat_pair <- sapply(tlg_r_names, function(i)
   llm_call(paste(prompt_var_dat_code, paste(readLines(i), collapse = " ")), 
            model = MODEL_NAME))
@@ -66,43 +73,18 @@ tlg_output <- sapply(tlg_r_names, function(i)
 tlg_parse_dat_var <- sapply(tlg_var_dat_pair, function(i)
   llm_call(paste(prompt_parse_dat_var, i), 
            model = MODEL_NAME))
-
-tab.out <- cbind(tlg_r_names, tlg_output, tlg_parse_dat_var, tlg_filter)
-colnames(tab.out) <- c("script","output","Analysis Datasets & Variables","selection criteria")
-knitr::kable(tab.out)
 ```
 
-### Approach 2:
+```{r}
+tab_out <- cbind(basename(tlg_r_names), tlg_output, tlg_parse_dat_var, tlg_filter)
+colnames(tab_out) <- c("script","output","Analysis Datasets & Variables","selection criteria")
+rownames(tab_out) <- NULL
+knitr::kable(tab_out)
 
-First write a description from R code, then extract information from the description - seem to have more formatting issues / information mixup
-
-```{r eval=FALSE}
-# NOT RUN
-tlg_extraction <- sapply(tlg_r_names, function(i)
-  llm_call(paste(prompt_tlg_code_extraction, paste(readLines(i), collapse = " ")), 
-           model = MODEL_NAME))
-
-tlg_var_dat_pair2 <- sapply(tlg_extraction, function(i)
-  llm_call(paste(prompt_var_dat_para, i), 
-           model = MODEL_NAME))
-
-tlg_filter2 <- sapply(tlg_extraction, function(i)
-  llm_call(paste(prompt_filter_para, i), 
-           model = MODEL_NAME))
-
-tlg_output2 <- sapply(tlg_extraction, function(i)
-  llm_call(paste(prompt_output_para, i), 
-           model = MODEL_NAME), simplify = F)
-
-tlg_parse_dat_var2 <- sapply(tlg_var_dat_pair2, function(i)
-  llm_call(paste(prompt_parse_dat_var, i), 
-           model = MODEL_NAME))
-
-tab.out2 <- cbind(tlg_r_names, tlg_output2, tlg_parse_dat_var2, tlg_filter2)
-tab.out3 <- apply(tab.out2, c(1, 2), function(x) gsub("\n", ";", x))
-colnames(tab.out3) <- c("script","output","Analysis Datasets & Variables","selection criteria")
-knitr::kable(tab.out3)
+write.csv(tab_out, file="../../outputs/intermediate/tlg_var_filter_table.csv", row.names = FALSE)
 ```
+
+
 
 ## read in variable descirptions
 
