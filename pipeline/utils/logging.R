@@ -30,7 +30,7 @@ mark_run_start <- function(run_description = "") {
   )
 
   write(run_header, log_file, append = TRUE)
-  cat(run_header)
+  cat("See logs folder for all llm input/output logs")
 }
 
 #' Log LLM call details to a daily log file
@@ -64,6 +64,4 @@ log_llm_call <- function(prompt, model, response, temperature = 0) {
   # Append to file
   write(log_entry, log_file, append = TRUE)
 
-  # Also print to console for visibility
-  cat(log_entry)
 }
