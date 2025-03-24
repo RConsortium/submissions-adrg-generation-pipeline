@@ -29,21 +29,13 @@ source(here::here("pipeline/automation/llm_prompts.R"))
 MODEL_NAME <- "gpt-4o"
 # initial comparison between gpt-4o, deepseek-reasoner, claude. gpt-4o & claude gave more consistent result with cleaner formatting
 
-# Validate model selection
-if (!MODEL_NAME %in% names(SUPPORTED_MODELS)) {
-  stop(sprintf(
-    "Model '%s' not supported. Supported models are: %s",
-    MODEL_NAME, paste(names(SUPPORTED_MODELS), collapse = ", ")
-  ))
-}
-
 # Mark the start of a new run
 mark_run_start(sprintf("Starting ADRG generation pipeline with model: %s", MODEL_NAME))
 
 # Print current working directory and model info
 print("Current working directory:")
 print(here::here())
-print(sprintf("Using model: %s (%s)", MODEL_NAME, SUPPORTED_MODELS[[MODEL_NAME]]$provider))
+print(sprintf("Using model: %s", MODEL_NAME))
 
 # identify tlg r files - using here package for path management
 tlg_r_names <- list.files(path = here::here("submission/programs"), pattern = "^tlf.*\\.r$", full.names = TRUE)
@@ -52,8 +44,6 @@ tlg_r_names <- list.files(path = here::here("submission/programs"), pattern = "^
 print("Found TLG files:")
 print(tlg_r_names)
 ```
-
-
 
 Extract information from R code
 
@@ -83,8 +73,6 @@ knitr::kable(tab_out)
 
 write.csv(tab_out, file="../../outputs/intermediate/tlg_var_filter_table.csv", row.names = FALSE)
 ```
-
-
 
 ## read in variable descirptions
 
