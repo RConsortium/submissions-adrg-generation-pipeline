@@ -29,9 +29,6 @@ source(here::here("pipeline/automation/llm_prompts.R"))
 MODEL_NAME <- "gpt-4o"
 # initial comparison between gpt-4o, deepseek-reasoner, claude. gpt-4o & claude gave more consistent result with cleaner formatting
 
-# Mark the start of a new run
-mark_run_start(sprintf("Starting ADRG generation pipeline with model: %s", MODEL_NAME))
-
 # Print current working directory and model info
 print("Current working directory:")
 print(here::here())

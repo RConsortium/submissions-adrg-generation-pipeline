@@ -38,35 +38,6 @@ test_that("llm_call creates correct chat object and gets response", {
   )
 })
 
-test_that("llm_call works with default model", {
-  # Create a mock chat object with a chat method
-  mock_chat <- structure(list(chat = function(prompt) {
-    "This is a mock response with default model"
-  }), class = "Chat")
-  
-  # Mock the ellmer::chat_claude function
-  mock_fn <- mock(mock_chat)
-  with_mocked_bindings(
-    chat_claude = mock_fn,
-    .package = "ellmer",
-    {
-      # Call our function with NULL model
-      result <- llm_call(
-        prompt = "Test prompt",
-        provider = "anthropic",
-        model = NULL
-      )
-      
-      # Check the result
-      expect_equal(result, "This is a mock response with default model")
-      
-      # Verify chat_claude was called with the right arguments
-      expect_called(mock_fn, 1)
-      args <- mock_args(mock_fn)[[1]]
-      expect_null(args$model) # Should be NULL to let ellmer use default
-    }
-  )
-})
 
 test_that("llm_call uses system prompt correctly", {
   # Create a mock chat object
@@ -83,6 +54,7 @@ test_that("llm_call uses system prompt correctly", {
       # Call our function with a system prompt
       result <- llm_call(
         prompt = "Test prompt",
+        model = "gpt-3.5-turbo",
         provider = "openai",
         system_prompt = "You are a helpful assistant"
       )
@@ -110,6 +82,7 @@ test_that("llm_call passes additional parameters correctly", {
       # Call our function with additional parameters
       result <- llm_call(
         prompt = "Test prompt",
+        model = "gpt-3.5-turbo",
         provider = "openai",
         temperature = 0.7,
         max_tokens = 1000
