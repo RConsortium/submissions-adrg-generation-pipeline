@@ -8,7 +8,9 @@ Provide a comma seperated text table with two columns:
 one for the variable names and the other for the associated dataset names. 
 no explanation please.
 Please use the initial source dataset names, don't include anything from intermediate datasets. 
-only include the variables from datasets whose dataset name starting with the letter a"
+only include the variables from datasets whose dataset name starting with the letter a. 
+Make sure two headers are included for the two columns - Variable and Dataset"
+
 
 prompt_filter_code <- "Please review the following R code and identify the filtering criteria applied. 
 When outputing variable name, parsing the associated data set name and the variable name, seperated by a dot, 
