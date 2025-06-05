@@ -14,6 +14,10 @@ library(jsonlite)
 library(readr)
 library(here)
 library(parallel)
+library(dplyr)
+library(btw)
+library(tidyr)
+library(data.table)
 
 
 # Set number of cores (e.g., 4 cores)
@@ -24,6 +28,7 @@ readRenviron(here::here(".Renviron"))
 
 source(here::here("pipeline/utils/llm_api.R"))
 source(here::here("pipeline/automation/llm_prompts.R"))
+source(here::here("pipeline/utils/util.R"))
 
 #MODEL_NAME <- "claude-3-5-haiku-latest"  # See or add to available models in llm_api.R
 MODEL_NAME <- "gpt-4o"
@@ -35,7 +40,7 @@ print(here::here())
 print(sprintf("Using model: %s", MODEL_NAME))
 
 # identify tlg r files - using here package for path management
-tlg_r_names <- list.files(path = here::here("submission/programs"), pattern = "^tlf.*\\.r$", full.names = TRUE)
+tlg_r_names <- list.files(path = here::here("../submissions-pilot5-datasetjson/pilot5-submission/pilot5-programs/"), pattern = "^tlf.*\\.r$", full.names = TRUE)
 
 # Print found files
 print("Found TLG files:")
@@ -68,19 +73,80 @@ colnames(tab_out) <- c("script","output","Analysis Datasets & Variables","select
 rownames(tab_out) <- NULL
 knitr::kable(tab_out)
 
-write.csv(tab_out, file="../../outputs/intermediate/tlg_var_filter_table.csv", row.names = FALSE)
+write.csv(tab_out, file=here::here("outputs/intermediate/tlg_var_filter_table.csv"), row.names = FALSE)
 ```
 
 ## read in variable descirptions
 
-These information can be used in section 3.1
+Use the table generated above, to create the table in section 3.1 (key variables and their description)
 
-# Automation block 2: ADaM generation informtion proprocessing
+get variable names
+```{r}
+all_var_list <- sapply(tlg_var_dat_pair, function(i)convert_to_dataframe(i), simplify = F)
+all_var <- do.call(rbind, all_var_list) |> distinct()
+colnames(all_var) <- c("Variable","Dataset")
+```
+
+read in data sets to get variable labels
+```{r}
+path_json <- "../submissions-pilot5-datasetjson/pilot5-submission/pilot5-output/pilot5-datasetjson/"
+data_json_names <- list.files(path = here::here(path_json), full.names = T)
+
+all_name_label_list <- sapply(data_json_names, function(i)fromJSON(i)$columns[,c("name","label")], simplify = F)
+all_name_label <- do.call(rbind, all_name_label_list) |> distinct()
+
+tab_var_label <- all_var |> left_join(all_name_label, by = c("Variable" = "name")) |> distinct()
+```
+
+```{r}
+knitr::kable(tab_var_label)
+
+write.csv(tab_var_label, file=here::here("outputs/intermediate/adam_var_label_table.csv"), row.names = FALSE)
+```
+
+
+# Automation block 2: R env information preprocessing
+
+```{r}
+#TODO: use the csv from pilot 5
+
+pkgloaded <- sessionInfo()$loadedOnly # get intial list of packages that were loaded
+# get initla list of packages that were also listed in the Session but may not have been used
+pkgother <- sessionInfo()$otherPkgs
+
+loaded <- data.frame(rbindlist(pkgloaded, idcol = TRUE, fill = TRUE)) %>%
+  select(Package, Title, Version, Description) %>%
+  mutate(loaded = "Y")
+other <- data.frame(rbindlist(pkgother, idcol = TRUE, fill = TRUE)) %>%
+  select(Package, Title, Version, Description) %>%
+  mutate(loaded = "N")
+
+pkgdesc <- bind_rows(loaded, other) # stacks all package data frames.
+# NOTE column 'loaded', from this data frame can be used to subset out packages
+# not used and may not be needed for the adrg.pdf
+```
+
+Original package descriptions from authors.. sometimes not very reader friendly
+```{r}
+print(pkgdesc |> select(c("Description")))
+
+```
+
+use btw to generate more reader friendly descriptions
+```{r}
+description_btw <- sapply(pkgdesc[,1], function(i)
+  llm_call(btw(i,"write an one sentence description on this package's functionality."), 
+           model = MODEL_NAME))
+
+pkgdesc2 <- pkgdesc
+pkgdesc2$Description <- description_btw
+
+knitr::kable(pkgdesc2|> select(c("Package","Version","Description")))
+```
+
+# Automation block 3: ADaM generation informtion proprocessing
 
 TBD
 
-# Automation block 3: R env information preprocessing
-
-TBD
 
 # insert information into ADRG template
